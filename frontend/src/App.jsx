@@ -22,7 +22,7 @@ function App() {
     if (jobTitle) params.job_title = jobTitle;
     if (country) params.country = country;
 
-    axios.get('http://127.0.0.1:8000/api/top-skills', { params })
+    axios.get('https://data-nerd-api.onrender.com/api/top-skills', { params })
       .then(res => {
         setData(res.data.results || []);
         setTotalJobs(res.data.total_jobs || 0);
@@ -32,7 +32,7 @@ function App() {
 
   // FETCH TRENDS
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/skill-trends')
+    axios.get('https://data-nerd-api.onrender.com/api/skill-trends')
       .then(res => setTrendData(res.data))
       .catch(err => console.error(err));
   }, []);
