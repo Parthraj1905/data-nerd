@@ -11,23 +11,21 @@ function App() {
   const [trendData, setTrendData] = useState([]); 
   const [jobTitle, setJobTitle] = useState('');
   const [country, setCountry] = useState('');
-  const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Mobile Menu State
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // --- NEW: PREVENT BACKGROUND SCROLLING ---
+  // PREVENT BACKGROUND SCROLL
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.classList.add('menu-open');
     } else {
       document.body.classList.remove('menu-open');
     }
-    // Cleanup on unmount
     return () => document.body.classList.remove('menu-open');
   }, [mobileMenuOpen]);
 
-  // FETCH TOP SKILLS
+  // FETCH DATA
   useEffect(() => {
     const params = { sort_by: 'count' };
     if (jobTitle) params.job_title = jobTitle;
@@ -41,7 +39,6 @@ function App() {
       .catch(err => console.error(err));
   }, [jobTitle, country]);
 
-  // FETCH TRENDS
   useEffect(() => {
     axios.get('https://data-nerd-api.onrender.com/api/skill-trends')
       .then(res => setTrendData(res.data))
@@ -49,9 +46,7 @@ function App() {
   }, []);
 
   const topSkillName = data.length > 0 ? data[0].skill_name : 'N/A';
-  const highestSalary = data.length > 0 
-    ? Math.max(...data.map(i => i.avg_salary || 0)) 
-    : 0;
+  const highestSalary = data.length > 0 ? Math.max(...data.map(i => i.avg_salary || 0)) : 0;
 
   const handleNavClick = (tab) => {
     setActiveTab(tab);
@@ -63,19 +58,10 @@ function App() {
       <ResponsiveContainer>
         <BarChart data={data} layout="vertical" margin={{ left: 40, right: 20 }}>
           <XAxis type="number" hide />
-          <YAxis 
-            dataKey="skill_name" type="category" width={100} tick={{ fill: '#6c7293', fontSize: 13 }} 
-            interval={0} axisLine={false} tickLine={false} 
-          />
-          <Tooltip 
-            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-            contentStyle={{ backgroundColor: '#191c24', border: '1px solid #2c2e33', color: '#fff' }} 
-            itemStyle={{ color: '#fff' }}
-          />
+          <YAxis dataKey="skill_name" type="category" width={100} tick={{ fill: '#6c7293', fontSize: 13 }} interval={0} axisLine={false} tickLine={false} />
+          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#191c24', border: '1px solid #2c2e33', color: '#fff' }} itemStyle={{ color: '#fff' }} />
           <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]}>
-             {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#0090e7' : '#00d25b'} />
-             ))}
+             {data.map((entry, index) => (<Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#0090e7' : '#00d25b'} />))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -84,16 +70,10 @@ function App() {
 
   return (
     <div className="app-container">
-      
-      {/* MOBILE OVERLAY */}
-      <div 
-        className={`sidebar-overlay ${mobileMenuOpen ? 'active' : ''}`} 
-        onClick={() => setMobileMenuOpen(false)}
-      ></div>
+      <div className={`sidebar-overlay ${mobileMenuOpen ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}></div>
 
-      {/* SIDEBAR */}
       <nav className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
-        <div className="brand-logo" style={{ marginBottom: '3rem' }}>Data nerd</div>
+        <div className="brand-logo" style={{ marginBottom: '3rem', paddingLeft: '15px' }}>Data Nerd</div>
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
           <div className="nav-icon">📊</div><span>Dashboard</span>
         </div>
@@ -104,7 +84,7 @@ function App() {
           <div className="nav-icon">📈</div><span>Market Trends</span>
         </div>
         
-        {/* NEW ABOUT BUTTON */}
+        {/* ABOUT BUTTON - ENSURE THIS IS HERE */}
         <div style={{ marginTop: 'auto', borderTop: '1px solid #2c2e33', paddingTop: '10px' }}>
             <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
             <div className="nav-icon">ℹ️</div><span>About</span>
@@ -112,17 +92,13 @@ function App() {
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
       <div className="main-panel">
-        
         <header className="navbar">
            <button className="menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>☰</button>
            <div style={{ color: '#6c7293', fontSize: '0.9rem', marginLeft: 'auto' }}>Data updated: Live</div>
         </header>
 
         <div className="content-wrapper">
-          
-          {/* --- VIEW 1: DASHBOARD --- */}
           {activeTab === 'dashboard' && (
             <>
               <div className="row">
@@ -143,7 +119,7 @@ function App() {
                 <div className="col-8 card">
                   <div className="card-title">
                     <span>Market Demand (Volume)</span>
-                    <div style={{display:'flex', gap:'5px', marginTop:'10px'}}>
+                    <div style={{display:'flex', gap:'5px', marginTop:'10px', justifyContent: 'center'}}>
                        <select onChange={e => setJobTitle(e.target.value)} value={jobTitle}>
                           <option value="">All Roles</option>
                           <option value="Data Analyst">Data Analyst</option>
@@ -177,7 +153,6 @@ function App() {
             </>
           )}
 
-          {/* --- VIEW 2: TOP SKILLS --- */}
           {activeTab === 'skills' && (
              <div className="card" style={{ height: 'auto', minHeight: '80vh', paddingBottom: '2rem' }}>
                 <div className="card-title"><h2>Detailed Skill Analysis</h2></div>
@@ -185,7 +160,6 @@ function App() {
              </div>
           )}
 
-          {/* --- VIEW 3: TRENDS --- */}
           {activeTab === 'trends' && (
             <div className="card" style={{ height: '80vh' }}>
                <div className="card-title"><h2>Historical Market Trends</h2></div>
@@ -205,19 +179,11 @@ function App() {
             </div>
           )}
 
-          {/* --- VIEW 4: ABOUT SECTION --- */}
           {activeTab === 'about' && (
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                
-                {/* Profile Card */}
                 <div className="card" style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                        <div style={{ 
-                            width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(45deg, #00d25b, #0090e7)', 
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' 
-                        }}>
-                            👨‍💻
-                        </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(45deg, #00d25b, #0090e7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>👨‍💻</div>
                         <div>
                             <h2 style={{ margin: 0, color: 'white' }}>Data Science Aspirant</h2>
                             <p style={{ color: '#00d25b', margin: '5px 0 0 0', fontWeight: '500' }}>Computer Engineering Student</p>
@@ -228,53 +194,27 @@ function App() {
                         My goal is to leverage <strong>Data Science & AI</strong> to solve real-world problems.
                     </p>
                 </div>
-
-                {/* Tech Stack Card */}
                 <div className="card" style={{ marginBottom: '2rem' }}>
                     <h3 style={{ color: 'white', borderBottom: '1px solid #2c2e33', paddingBottom: '10px' }}>Built With</h3>
-                    <div style={{ display: 'flex', gap: '15px', marginTop: '15px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
                         <span style={{ background: 'rgba(0, 144, 231, 0.2)', color: '#0090e7', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>React.js</span>
                         <span style={{ background: 'rgba(0, 210, 91, 0.2)', color: '#00d25b', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>FastAPI (Python)</span>
                         <span style={{ background: 'rgba(252, 66, 74, 0.2)', color: '#fc424a', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>PostgreSQL</span>
-                        <span style={{ background: 'rgba(143, 95, 232, 0.2)', color: '#8f5fe8', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>Recharts</span>
                     </div>
                 </div>
-
-                {/* --- NEW: CONTACT CARD --- */}
                 <div className="card">
                     <h3 style={{ color: 'white', borderBottom: '1px solid #2c2e33', paddingBottom: '10px' }}>Connect</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-                        
-                        {/* Email */}
-                        <a href="mailto:parthrajsinhparmar19@gmail.com" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
-                            <span style={{ fontSize: '1.2rem', width: '30px', textAlign: 'center' }}>📧</span>
-                            <span style={{ transition: 'color 0.2s' }} onMouseOver={e => e.target.style.color='white'} onMouseOut={e => e.target.style.color='#b0b8c4'}>
-                                parthrajsinhparmar19@gmail.com
-                            </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px', alignItems: 'center' }}>
+                        <a href="mailto:your_email@example.com" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
+                            <span style={{ fontSize: '1.2rem' }}>📧</span><span>your_email@example.com</span>
                         </a>
-
-                        {/* GitHub */}
-                        <a href="https://github.com/Parthraj1905" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
-                             <span style={{ fontSize: '1.2rem', width: '30px', textAlign: 'center' }}>🐙</span>
-                             <span style={{ transition: 'color 0.2s' }} onMouseOver={e => e.target.style.color='white'} onMouseOut={e => e.target.style.color='#b0b8c4'}>
-                                github.com/Parthraj1905
-                             </span>
+                        <a href="https://github.com/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
+                             <span style={{ fontSize: '1.2rem' }}>🐙</span><span>Github</span>
                         </a>
-
-                        {/* LinkedIn (Optional) */}
-                        <a href="https://www.linkedin.com/in/parthrajsinh-parmar-a86463373/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
-                             <span style={{ fontSize: '1.2rem', width: '30px', textAlign: 'center' }}>🔗</span>
-                             <span style={{ transition: 'color 0.2s' }} onMouseOver={e => e.target.style.color='white'} onMouseOut={e => e.target.style.color='#b0b8c4'}>
-                                linkedin.com/in/parthrajsinh-parmar-a86463373/
-                             </span>
-                        </a>
-
                     </div>
                 </div>
-
             </div>
           )}
-
         </div>
       </div>
     </div>

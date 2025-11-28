@@ -192,28 +192,32 @@ select {
 }
 
 /* --- MOBILE FIXES (Max Width 991px) --- */
+/* --- MOBILE FIXES (Max Width 991px) --- */
 @media (max-width: 991px) {
   
-  /* 1. Layout Stacking & Reset */
+  /* 1. Layout Stacking */
   .app-container {
     display: block;
     width: 100%;
-    overflow-x: hidden; /* Prevent horizontal scroll */
+    overflow-x: hidden;
   }
 
-  /* 2. Sidebar: Scrolling & Positioning */
+  /* 2. Sidebar: Flexbox Fix */
   .sidebar {
+    display: flex;             /* <--- ADDED THIS (Fixes missing About section) */
+    flex-direction: column;    /* <--- ADDED THIS */
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh; /* Full screen height */
-    width: 280px;  /* Slightly wider for better touch targets */
+    height: 100vh;
+    width: 280px;
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 10px 0 25px rgba(0,0,0,0.7);
-    overflow-y: auto; /* ENABLE SCROLLING INSIDE SIDEBAR */
-    padding-bottom: 50px; /* Extra space at bottom for "About" */
+    overflow-y: auto; 
+    padding-bottom: 50px;
+    background-color: var(--bg-card); /* Ensure background is dark */
   }
 
   .sidebar.open {
@@ -224,13 +228,12 @@ select {
     display: block;
   }
 
-  /* 3. Main Panel: Remove Margins & Fix Padding */
+  /* 3. Main Panel & Padding */
   .main-panel {
     width: 100%;
-    margin-left: 0 !important; /* Force reset */
+    margin-left: 0 !important;
   }
-
-  /* Fix the "Shifted to Right" issue by reducing padding */
+  
   .content-wrapper {
     padding: 1rem; 
   }
@@ -240,36 +243,42 @@ select {
     justify-content: flex-start;
   }
 
-  /* 4. Show Hamburger Menu */
   .menu-toggle {
     display: block;
   }
 
-  /* 5. Stack Cards Vertically */
+  /* 4. Cards: Center Everything */
   .row {
     display: flex;
     flex-direction: column;
-    margin-right: 0; /* Fix Bootstrap-like row margins */
-    margin-left: 0;
+    margin: 0;
   }
 
   .col-3, .col-4, .col-8 {
     width: 100%;
     min-width: 100%;
     margin-bottom: 1rem;
-    padding-left: 0;  /* Remove grid padding */
-    padding-right: 0;
+    padding: 0;
   }
 
-  /* 6. Center Card Content on Mobile */
   .card {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;    /* <--- CENTERS ITEMS HORIZONTALLY */
+    text-align: center;     /* <--- CENTERS TEXT */
+  }
+
+  /* Center the Title/Dropdowns inside cards */
+  .card-title {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 }
 
-/* HELPER: Stop Body Scroll when Menu is Open */
+/* HELPER: Stop Body Scroll */
 body.menu-open {
   overflow: hidden;
   position: fixed;
