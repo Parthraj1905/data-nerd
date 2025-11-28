@@ -192,32 +192,30 @@ select {
 }
 
 /* --- MOBILE FIXES (Max Width 991px) --- */
-/* --- MOBILE FIXES (Max Width 991px) --- */
 @media (max-width: 991px) {
   
-  /* 1. Layout Stacking */
+  /* 1. Reset Layout */
   .app-container {
     display: block;
     width: 100%;
     overflow-x: hidden;
   }
 
-  /* 2. Sidebar: Flexbox Fix */
+  /* 2. Sidebar Fixes (The "About" Button Fix) */
   .sidebar {
-    display: flex;             /* <--- ADDED THIS (Fixes missing About section) */
-    flex-direction: column;    /* <--- ADDED THIS */
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: 100dvh; /* <--- Use Dynamic Height for Mobile Browsers */
     width: 280px;
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 10px 0 25px rgba(0,0,0,0.7);
+    background-color: var(--bg-card);
     overflow-y: auto; 
-    padding-bottom: 50px;
-    background-color: var(--bg-card); /* Ensure background is dark */
+    padding-bottom: 120px; /* <--- HUGE padding to force About section up */
   }
 
   .sidebar.open {
@@ -228,14 +226,14 @@ select {
     display: block;
   }
 
-  /* 3. Main Panel & Padding */
+  /* 3. Main Panel Padding */
   .main-panel {
     width: 100%;
     margin-left: 0 !important;
   }
   
   .content-wrapper {
-    padding: 1rem; 
+    padding: 15px; /* Reduce padding slightly */
   }
 
   .navbar {
@@ -247,7 +245,7 @@ select {
     display: block;
   }
 
-  /* 4. Cards: Center Everything */
+  /* 4. Card & Text Overflow Fixes */
   .row {
     display: flex;
     flex-direction: column;
@@ -256,7 +254,7 @@ select {
 
   .col-3, .col-4, .col-8 {
     width: 100%;
-    min-width: 100%;
+    min-width: 0; /* Critical for preventing flex overflow */
     margin-bottom: 1rem;
     padding: 0;
   }
@@ -265,22 +263,30 @@ select {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;    /* <--- CENTERS ITEMS HORIZONTALLY */
-    text-align: center;     /* <--- CENTERS TEXT */
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem 1rem; /* Adjust padding */
+    width: 100%;
+    box-sizing: border-box; /* Ensure padding doesn't expand width */
   }
 
-  /* Center the Title/Dropdowns inside cards */
+  /* Force text to stay inside */
+  .stat-value {
+    font-size: 1.8rem; /* Make slightly smaller on mobile */
+    word-break: break-word; /* <--- PREVENTS OVERFLOW */
+    line-height: 1.2;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    white-space: normal; /* Allow wrapping */
+  }
+
   .card-title {
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
+    white-space: normal;
   }
-}
-
-/* HELPER: Stop Body Scroll */
-body.menu-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
 }

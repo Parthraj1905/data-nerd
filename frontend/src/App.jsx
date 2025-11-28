@@ -86,10 +86,10 @@ function App() {
         
         {/* ABOUT BUTTON - ENSURE THIS IS HERE */}
         <div style={{ marginTop: 'auto', borderTop: '1px solid #2c2e33', paddingTop: '10px' }}>
-            <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
+          <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
             <div className="nav-icon">ℹ️</div><span>About</span>
-            </div>
-        </div>
+          </div>
+      </div>
       </nav>
 
       <div className="main-panel">
