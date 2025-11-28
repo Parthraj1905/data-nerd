@@ -98,26 +98,30 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* MOBILE OVERLAY */}
       <div className={`sidebar-overlay ${mobileMenuOpen ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}></div>
 
+      {/* SIDEBAR */}
       <nav className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="brand-logo" style={{ marginBottom: '3rem', paddingLeft: '15px' }}>Data Nerd</div>
+        
+        {/* MENU ITEMS - NOW ALL TOGETHER */}
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
           <div className="nav-icon">📊</div><span>Dashboard</span>
         </div>
+        
         <div className={`nav-item ${activeTab === 'skills' ? 'active' : ''}`} onClick={() => handleNavClick('skills')}>
           <div className="nav-icon">🔥</div><span>Top Skills</span>
         </div>
+        
         <div className={`nav-item ${activeTab === 'trends' ? 'active' : ''}`} onClick={() => handleNavClick('trends')}>
           <div className="nav-icon">📈</div><span>Market Trends</span>
         </div>
         
-        {/* ABOUT BUTTON - ENSURE THIS IS HERE */}
-        <div style={{ marginTop: 'auto', borderTop: '1px solid #2c2e33', paddingTop: '10px' }}>
-          <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
-            <div className="nav-icon">ℹ️</div><span>About</span>
-          </div>
-      </div>
+        {/* MOVED ABOUT BUTTON UP - No longer stuck to bottom */}
+        <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
+          <div className="nav-icon">ℹ️</div><span>About</span>
+        </div>
       </nav>
 
       <div className="main-panel">
@@ -248,5 +252,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
