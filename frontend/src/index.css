@@ -1,0 +1,254 @@
+:root {
+  --bg-body: #000000;          /* Pure Black Background */
+  --bg-card: #191c24;          /* Dark Grey Cards */
+  --text-primary: #ffffff;
+  --text-secondary: #6c7293;   /* Muted Grey Text */
+  --accent-green: #00d25b;     /* Success Green */
+  --accent-red: #fc424a;       /* Danger Red */
+  --accent-blue: #8f5fe8;      /* Primary Purple/Blue */
+  --border-color: #2c2e33;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Rubik', sans-serif; /* Standard Admin Font */
+  background-color: var(--bg-body);
+  color: var(--text-secondary);
+  overflow-x: hidden;
+}
+
+/* --- LAYOUT GRID --- */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  width: 244px;
+  background-color: var(--bg-card);
+  border-right: 1px solid var(--bg-body);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1rem;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.brand-logo {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding-left: 1rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-item:hover, .nav-item.active {
+  background-color: #0f1015;
+  color: white;
+}
+
+.nav-icon {
+  margin-right: 15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(108, 114, 147, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+/* --- MAIN CONTENT --- */
+.main-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 244px);
+}
+
+.navbar {
+  height: 70px;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--bg-body);
+}
+
+.search-bar {
+  background: var(--bg-body);
+  border: 1px solid var(--border-color);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 4px;
+  width: 300px;
+}
+
+.content-wrapper {
+  padding: 2.5rem;
+  background: var(--bg-body);
+}
+
+/* --- WIDGET CARDS --- */
+.row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.col-3 { flex: 1; min-width: 200px; }
+.col-8 { flex: 2; min-width: 500px; }
+.col-4 { flex: 1; min-width: 300px; }
+
+.card {
+  background: var(--bg-card);
+  border-radius: 4px;
+  padding: 1.5rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.card-title {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* --- METRIC STAT CARDS (Top Row) --- */
+.stat-value {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: white;
+}
+.badge-success { background: rgba(0, 210, 91, 0.2); color: var(--accent-green); }
+.badge-danger { background: rgba(252, 66, 74, 0.2); color: var(--accent-red); }
+
+/* --- FORM ELEMENTS --- */
+select {
+  background: #2A3038;
+  border: none;
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+
+/* Mobile Menu Trigger (Hidden on Desktop) */
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 1rem;
+}
+
+/* Overlay for Mobile Sidebar */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  z-index: 998;
+}
+
+/* TABLET & MOBILE DEVICES (Max Width 991px) */
+@media (max-width: 991px) {
+  
+  /* 1. Layout Stacking */
+  .app-container {
+    display: block; /* Remove flex to allow stacking */
+  }
+
+  /* 2. Sidebar: Off-Canvas Logic */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%); /* Hide off-screen */
+    transition: transform 0.3s ease-in-out;
+    width: 260px;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+  }
+
+  .sidebar.open {
+    transform: translateX(0); /* Slide In */
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  /* 3. Main Panel Expansion */
+  .main-panel {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* 4. Show Hamburger Menu */
+  .menu-toggle {
+    display: block;
+  }
+
+  .navbar {
+    justify-content: flex-start; /* Align menu button left */
+  }
+
+  /* 5. Stack Grid Columns Vertically */
+  .row {
+    flex-direction: column;
+  }
+
+  .col-3, .col-4, .col-8 {
+    flex: 1;
+    width: 100%; /* Full width cards */
+    min-width: 100%;
+    margin-bottom: 1rem; /* Spacing between stacked cards */
+  }
+
+  /* 6. Chart Adjustments */
+  .card {
+    padding: 1rem;
+  }
+}
