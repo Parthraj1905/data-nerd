@@ -259,15 +259,15 @@ select {
     padding: 0;
   }
 
+  /* Inside @media (max-width: 991px) */
+  
   .card {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 1.5rem 1rem; /* Adjust padding */
-    width: 100%;
-    box-sizing: border-box; /* Ensure padding doesn't expand width */
+    padding: 0.5rem; /* CHANGED: Reduced from default to give chart more width */
   }
 
   /* Force text to stay inside */

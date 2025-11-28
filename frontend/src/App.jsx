@@ -14,6 +14,14 @@ function App() {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Mobile Detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // PREVENT BACKGROUND SCROLL
   useEffect(() => {
@@ -56,12 +64,32 @@ function App() {
   const MarketChart = ({ height }) => (
     <div style={{ height: height, width: '100%' }}>
       <ResponsiveContainer>
-        <BarChart data={data} layout="vertical" margin={{ left: 40, right: 20 }}>
+        <BarChart 
+            data={data} 
+            layout="vertical" 
+            // MOBILE FIX: Reduce margins to 0 on mobile, keep desktop spacing normal
+            margin={{ left: isMobile ? 0 : 40, right: isMobile ? 0 : 20 }}
+        >
           <XAxis type="number" hide />
-          <YAxis dataKey="skill_name" type="category" width={100} tick={{ fill: '#6c7293', fontSize: 13 }} interval={0} axisLine={false} tickLine={false} />
-          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#191c24', border: '1px solid #2c2e33', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+          <YAxis 
+            dataKey="skill_name" 
+            type="category" 
+            // MOBILE FIX: Reduce text width from 100px to 70px on mobile
+            width={isMobile ? 70 : 100} 
+            tick={{ fill: '#6c7293', fontSize: isMobile ? 11 : 13 }} // Slightly smaller font
+            interval={0} 
+            axisLine={false} 
+            tickLine={false} 
+          />
+          <Tooltip 
+            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+            contentStyle={{ backgroundColor: '#191c24', border: '1px solid #2c2e33', color: '#fff' }} 
+            itemStyle={{ color: '#fff' }}
+          />
           <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]}>
-             {data.map((entry, index) => (<Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#0090e7' : '#00d25b'} />))}
+             {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#0090e7' : '#00d25b'} />
+             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -205,10 +233,10 @@ function App() {
                 <div className="card">
                     <h3 style={{ color: 'white', borderBottom: '1px solid #2c2e33', paddingBottom: '10px' }}>Connect</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px', alignItems: 'center' }}>
-                        <a href="mailto:your_email@example.com" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
-                            <span style={{ fontSize: '1.2rem' }}>📧</span><span>your_email@example.com</span>
+                        <a href="mailto:parthrajsinhparmar19@gmail.com" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
+                            <span style={{ fontSize: '1.2rem' }}>📧</span><span>parthrajsinhparmar19@gmail.com</span>
                         </a>
-                        <a href="https://github.com/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
+                        <a href="https://github.com/Parthraj1905" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
                              <span style={{ fontSize: '1.2rem' }}>🐙</span><span>Github</span>
                         </a>
                     </div>
