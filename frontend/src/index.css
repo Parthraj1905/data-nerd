@@ -191,39 +191,53 @@ select {
   z-index: 998;
 }
 
-/* TABLET & MOBILE DEVICES (Max Width 991px) */
+/* --- MOBILE FIXES (Max Width 991px) --- */
 @media (max-width: 991px) {
   
-  /* 1. Layout Stacking */
+  /* 1. Layout Stacking & Reset */
   .app-container {
-    display: block; /* Remove flex to allow stacking */
+    display: block;
+    width: 100%;
+    overflow-x: hidden; /* Prevent horizontal scroll */
   }
 
-  /* 2. Sidebar: Off-Canvas Logic */
+  /* 2. Sidebar: Scrolling & Positioning */
   .sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: 100vh; /* Full screen height */
+    width: 280px;  /* Slightly wider for better touch targets */
     z-index: 1000;
-    transform: translateX(-100%); /* Hide off-screen */
-    transition: transform 0.3s ease-in-out;
-    width: 260px;
-    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 25px rgba(0,0,0,0.7);
+    overflow-y: auto; /* ENABLE SCROLLING INSIDE SIDEBAR */
+    padding-bottom: 50px; /* Extra space at bottom for "About" */
   }
 
   .sidebar.open {
-    transform: translateX(0); /* Slide In */
+    transform: translateX(0);
   }
 
   .sidebar-overlay.active {
     display: block;
   }
 
-  /* 3. Main Panel Expansion */
+  /* 3. Main Panel: Remove Margins & Fix Padding */
   .main-panel {
     width: 100%;
-    margin-left: 0;
+    margin-left: 0 !important; /* Force reset */
+  }
+
+  /* Fix the "Shifted to Right" issue by reducing padding */
+  .content-wrapper {
+    padding: 1rem; 
+  }
+
+  .navbar {
+    padding: 0 1rem;
+    justify-content: flex-start;
   }
 
   /* 4. Show Hamburger Menu */
@@ -231,24 +245,33 @@ select {
     display: block;
   }
 
-  .navbar {
-    justify-content: flex-start; /* Align menu button left */
-  }
-
-  /* 5. Stack Grid Columns Vertically */
+  /* 5. Stack Cards Vertically */
   .row {
+    display: flex;
     flex-direction: column;
+    margin-right: 0; /* Fix Bootstrap-like row margins */
+    margin-left: 0;
   }
 
   .col-3, .col-4, .col-8 {
-    flex: 1;
-    width: 100%; /* Full width cards */
+    width: 100%;
     min-width: 100%;
-    margin-bottom: 1rem; /* Spacing between stacked cards */
+    margin-bottom: 1rem;
+    padding-left: 0;  /* Remove grid padding */
+    padding-right: 0;
   }
 
-  /* 6. Chart Adjustments */
+  /* 6. Center Card Content on Mobile */
   .card {
-    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
+}
+
+/* HELPER: Stop Body Scroll when Menu is Open */
+body.menu-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }

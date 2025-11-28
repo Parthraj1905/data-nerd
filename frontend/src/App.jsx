@@ -16,6 +16,17 @@ function App() {
   // Mobile Menu State
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // --- NEW: PREVENT BACKGROUND SCROLLING ---
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
+    // Cleanup on unmount
+    return () => document.body.classList.remove('menu-open');
+  }, [mobileMenuOpen]);
+
   // FETCH TOP SKILLS
   useEffect(() => {
     const params = { sort_by: 'count' };
