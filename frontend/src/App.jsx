@@ -14,8 +14,6 @@ function App() {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // NEW: Loading State
   const [isLoading, setIsLoading] = useState(true);
 
   // Mobile Detection
@@ -27,7 +25,7 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // PREVENT BACKGROUND SCROLL
+  // Prevent Background Scroll
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.classList.add('menu-open');
@@ -37,36 +35,27 @@ function App() {
     return () => document.body.classList.remove('menu-open');
   }, [mobileMenuOpen]);
 
-  // FETCH DATA
+  // Fetch Data
   useEffect(() => {
-    // Start Loading
     setIsLoading(true);
-
     const params = { sort_by: 'count' };
     if (jobTitle) params.job_title = jobTitle;
     if (country) params.country = country;
 
-    // We use Promise.all to wait for BOTH fetches to finish before showing the dashboard
     Promise.all([
       axios.get('https://data-nerd-api.onrender.com/api/top-skills', { params }),
       axios.get('https://data-nerd-api.onrender.com/api/skill-trends')
     ])
     .then(([skillsRes, trendsRes]) => {
-      // 1. Set Skills Data
       setData(skillsRes.data.results || []);
       setTotalJobs(skillsRes.data.total_jobs || 0);
-      
-      // 2. Set Trends Data
       setTrendData(trendsRes.data);
-      
-      // 3. Stop Loading
       setIsLoading(false);
     })
     .catch(err => {
       console.error(err);
-      setIsLoading(false); // Stop loading even if error
+      setIsLoading(false);
     });
-
   }, [jobTitle, country]);
 
   const topSkillName = data.length > 0 ? data[0].skill_name : 'N/A';
@@ -87,13 +76,9 @@ function App() {
         >
           <XAxis type="number" hide />
           <YAxis 
-            dataKey="skill_name" 
-            type="category" 
-            width={isMobile ? 70 : 100} 
-            tick={{ fill: '#6c7293', fontSize: isMobile ? 11 : 13 }} 
-            interval={0} 
-            axisLine={false} 
-            tickLine={false} 
+            dataKey="skill_name" type="category" width={isMobile ? 70 : 100} 
+            tick={{ fill: '#6c7293', fontSize: isMobile ? 11 : 13 }} interval={0} 
+            axisLine={false} tickLine={false} 
           />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#191c24', border: '1px solid #2c2e33', color: '#fff' }} itemStyle={{ color: '#fff' }} />
           <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]}>
@@ -109,9 +94,11 @@ function App() {
       <div className={`sidebar-overlay ${mobileMenuOpen ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}></div>
 
       <nav className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
-        <div className="brand-logo" style={{ marginBottom: '3rem', paddingLeft: '15px' }}>Data Nerd</div>
+        {/* BRANDING: Personalize this to show ownership immediately */}
+        <div className="brand-logo" style={{ marginBottom: '3rem', paddingLeft: '15px' }}>
+          Data Nerd <span style={{ fontSize: '0.6rem', color: '#00d25b', verticalAlign: 'super' }}>BY PARTH</span>
+        </div>
         
-        {/* MENU ITEMS - ABOUT IS NOW IN THE LIST */}
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
           <div className="nav-icon">📊</div><span>Dashboard</span>
         </div>
@@ -122,7 +109,7 @@ function App() {
           <div className="nav-icon">📈</div><span>Market Trends</span>
         </div>
         <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
-          <div className="nav-icon">ℹ️</div><span>About</span>
+          <div className="nav-icon">ℹ️</div><span>About Project</span>
         </div>
       </nav>
 
@@ -133,16 +120,13 @@ function App() {
         </header>
 
         <div className="content-wrapper">
-          
-          {/* --- LOADING SCREEN --- */}
           {isLoading ? (
             <div className="loading-container">
               <div className="spinner"></div>
-              <p>Waking up the server... (this may take 15s)</p>
+              <p>Waking up the server... (this may take 10s)</p>
             </div>
           ) : (
             <>
-              {/* --- DASHBOARD VIEW --- */}
               {activeTab === 'dashboard' && (
                 <>
                   <div className="row">
@@ -197,7 +181,6 @@ function App() {
                 </>
               )}
 
-              {/* --- SKILLS VIEW --- */}
               {activeTab === 'skills' && (
                 <div className="card" style={{ height: 'auto', minHeight: '80vh', paddingBottom: '2rem' }}>
                     <div className="card-title"><h2>Detailed Skill Analysis</h2></div>
@@ -205,7 +188,6 @@ function App() {
                 </div>
               )}
 
-              {/* --- TRENDS VIEW --- */}
               {activeTab === 'trends' && (
                 <div className="card" style={{ height: '80vh' }}>
                   <div className="card-title"><h2>Historical Market Trends</h2></div>
@@ -225,39 +207,69 @@ function App() {
                 </div>
               )}
 
-              {/* --- ABOUT VIEW --- */}
+              {/* --- NEW ABOUT / IDENTITY SECTION --- */}
               {activeTab === 'about' && (
-                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <div className="card" style={{ marginBottom: '2rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(45deg, #00d25b, #0090e7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>👨‍💻</div>
-                            <div>
-                                <h2 style={{ margin: 0, color: 'white' }}>Data Science Aspirant</h2>
-                                <p style={{ color: '#00d25b', margin: '5px 0 0 0', fontWeight: '500' }}>Computer Engineering Student</p>
+                <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    <div className="row">
+                        
+                        {/* COLUMN 1: PROJECT DOCUMENTATION */}
+                        <div className="col-8 card" style={{ textAlign: 'left', alignItems: 'flex-start' }}>
+                            <h2 style={{ color: 'white', marginBottom: '1rem' }}>About Data Nerd</h2>
+                            <p style={{ color: '#b0b8c4', lineHeight: '1.6' }}>
+                                <strong>Data Nerd</strong> is a specialized market intelligence platform designed for data professionals. 
+                                In an industry flooded with noise, this dashboard provides clear signals on which skills are actually in demand.
+                            </p>
+                            
+                            <h3 style={{ color: '#0090e7', marginTop: '1.5rem', fontSize: '1.1rem' }}>How it Works</h3>
+                            <ul style={{ color: '#b0b8c4', paddingLeft: '1.2rem', lineHeight: '1.8' }}>
+                                <li><strong>Data Aggregation:</strong> The system continuously scans job postings from major platforms.</li>
+                                <li><strong>NLP Analysis:</strong> Text descriptions are parsed to extract technical keywords (e.g., "Python", "AWS").</li>
+                                <li><strong>Live Visualization:</strong> Data is served via a FastAPI backend to this React dashboard in real-time.</li>
+                            </ul>
+
+                            <h3 style={{ color: '#00d25b', marginTop: '1.5rem', fontSize: '1.1rem' }}>Purpose</h3>
+                            <p style={{ color: '#b0b8c4', lineHeight: '1.6' }}>
+                                Built to assist students and professionals in prioritizing their learning path based on actual market volume and salary data, rather than hype.
+                            </p>
+                        </div>
+
+                        {/* COLUMN 2: DEVELOPER IDENTITY (PROOF OF WORK) */}
+                        <div className="col-4 card">
+                            <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: '#191c24', border: '2px solid #00d25b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', margin: '0 auto' }}>
+                                👨‍💻
                             </div>
-                        </div>
-                        <p style={{ marginTop: '20px', lineHeight: '1.7', color: '#b0b8c4' }}>
-                            Welcome to <strong>Data Nerd</strong>. I built this project to bridge the gap between job market noise and actionable data. 
-                            My goal is to leverage <strong>Data Science & AI</strong> to solve real-world problems.
-                        </p>
-                    </div>
-                    <div className="card" style={{ marginBottom: '2rem' }}>
-                        <h3 style={{ color: 'white', borderBottom: '1px solid #2c2e33', paddingBottom: '10px' }}>Built With</h3>
-                        <div style={{ display: 'flex', gap: '15px', marginTop: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <span style={{ background: 'rgba(0, 144, 231, 0.2)', color: '#0090e7', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>React.js</span>
-                            <span style={{ background: 'rgba(0, 210, 91, 0.2)', color: '#00d25b', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>FastAPI (Python)</span>
-                            <span style={{ background: 'rgba(252, 66, 74, 0.2)', color: '#fc424a', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem' }}>PostgreSQL</span>
-                        </div>
-                    </div>
-                    <div className="card">
-                        <h3 style={{ color: 'white', borderBottom: '1px solid #2c2e33', paddingBottom: '10px' }}>Connect</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px', alignItems: 'center' }}>
-                            <a href="mailto:parthrajsinhparmar19@gmail.com" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
-                                <span style={{ fontSize: '1.2rem' }}>📧</span><span>parthrajsinhparmar19@gmail.com</span>
+                            <h2 style={{ color: 'white', marginTop: '1rem' }}>Parth</h2>
+                            <p style={{ color: '#6c7293', fontSize: '0.9rem' }}>Full Stack Developer &<br/>Data Science Aspirant</p>
+                            
+                            <div style={{ width: '100%', height: '1px', background: '#2c2e33', margin: '1.5rem 0' }}></div>
+
+                            <h4 style={{ color: '#fff', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Verify Ownership</h4>
+                            <p style={{ color: '#6c7293', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                                This project is open-source. Verify the commit history to confirm authorship.
+                            </p>
+
+                            <a href="https://github.com/Parthraj1905/data-nerd" target="_blank" rel="noopener noreferrer" 
+                               style={{ background: '#24292e', color: 'white', padding: '10px 20px', borderRadius: '6px', textDecoration: 'none', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
+                                <span style={{ marginRight: '8px' }}>🐙</span> View Source Code
                             </a>
-                            <a href="https://github.com/Parthraj1905" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '15px', color: '#b0b8c4', textDecoration: 'none' }}>
-                                <span style={{ fontSize: '1.2rem' }}>🐙</span><span>Github</span>
+
+                            <a href="https://www.linkedin.com/in/parthrajsinh-parmar-a86463373" target="_blank" rel="noopener noreferrer" 
+                               style={{ background: '#0077b5', color: 'white', padding: '10px 20px', borderRadius: '6px', textDecoration: 'none', display: 'block', fontWeight: '500' }}>
+                                <span style={{ marginRight: '8px' }}>🔗</span> Connect on LinkedIn
                             </a>
+                        </div>
+
+                    </div>
+
+                    {/* TECH STACK FOOTER */}
+                    <div className="card" style={{ marginTop: '1rem' }}>
+                        <h4 style={{ color: '#6c7293', marginBottom: '1rem' }}>Technology Stack</h4>
+                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <span style={{ border: '1px solid #0090e7', color: '#0090e7', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>React.js</span>
+                            <span style={{ border: '1px solid #00d25b', color: '#00d25b', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>FastAPI</span>
+                            <span style={{ border: '1px solid #fc424a', color: '#fc424a', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>PostgreSQL</span>
+                            <span style={{ border: '1px solid #8f5fe8', color: '#8f5fe8', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Render Cloud</span>
+                            <span style={{ border: '1px solid #ffffff', color: '#ffffff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Vercel</span>
                         </div>
                     </div>
                 </div>
