@@ -5,7 +5,7 @@
 <p align="center">
 <b>A real-time analytics platform analyzing 670k+ job postings to identify high-demand technical skills.</b>
 <br />
-<a href="https://www.google.com/search?q=data-nerd.vercel.app"><strong>View Live Demo »</strong></a>
+<a href="data-nerd.vercel.app"><strong>View Live Demo »</strong></a>
 <br />
 <br />
 <a href="https://www.google.com/search?q=https://data-nerd-api.onrender.com/docs">Explore API</a>
