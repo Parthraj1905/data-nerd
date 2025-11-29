@@ -239,7 +239,7 @@ function App() {
                                 👨‍💻
                             </div>
                             <h2 style={{ color: 'white', marginTop: '1rem' }}>Parth</h2>
-                            <p style={{ color: '#6c7293', fontSize: '0.9rem' }}>Full Stack Developer &<br/>Data Science Aspirant</p>
+                            <p style={{ color: '#6c7293', fontSize: '0.9rem' }}><br/>Data Science Aspirant</p>
                             
                             <div style={{ width: '100%', height: '1px', background: '#2c2e33', margin: '1.5rem 0' }}></div>
 
