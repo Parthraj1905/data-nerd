@@ -239,7 +239,7 @@ function App() {
                                 👨‍💻
                             </div>
                             <h2 style={{ color: 'white', marginTop: '1rem' }}>Parth</h2>
-                            <p style={{ color: '#6c7293', fontSize: '0.9rem' }}><br/>Data Science Aspirant</p>
+                            <p style={{ color: '#6c7293', fontSize: '0.9rem' }}>Data Science Aspirant</p>
                             
                             <div style={{ width: '100%', height: '1px', background: '#2c2e33', margin: '1.5rem 0' }}></div>
 
@@ -266,10 +266,11 @@ function App() {
                         <h4 style={{ color: '#6c7293', marginBottom: '1rem' }}>Technology Stack</h4>
                         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
                             <span style={{ border: '1px solid #0090e7', color: '#0090e7', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>React.js</span>
-                            <span style={{ border: '1px solid #00d25b', color: '#00d25b', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>FastAPI</span>
+                            <span style={{ border: '1px solid #ffff02ff', color: '#ffff02ff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>FastAPI</span>
                             <span style={{ border: '1px solid #fc424a', color: '#fc424a', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>PostgreSQL</span>
                             <span style={{ border: '1px solid #8f5fe8', color: '#8f5fe8', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Render Cloud</span>
                             <span style={{ border: '1px solid #ffffff', color: '#ffffff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Vercel</span>
+                            <span style={{ border: '1px solid #09ff00ff', color: '#09ff00ff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Neon Console</span>
                         </div>
                     </div>
                 </div>
