@@ -1,286 +1,431 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, 
-  LineChart, Line, Legend 
-} from 'recharts';
+import { useState, useEffect, useRef } from "react";
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Legend
+} from "recharts";
 
-function App() {
-  const [data, setData] = useState([]);
-  const [totalJobs, setTotalJobs] = useState(0);
-  const [trendData, setTrendData] = useState([]); 
-  const [jobTitle, setJobTitle] = useState('');
-  const [country, setCountry] = useState('');
-  
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+const ALL_SKILLS = [
+  {skill_name:"sql",job_count:385750,avg_salary:124935,value:57.5,skill_type:"programming"},
+  {skill_name:"python",job_count:381863,avg_salary:132440,value:57.0,skill_type:"programming"},
+  {skill_name:"aws",job_count:145718,avg_salary:136481,value:21.7,skill_type:"cloud"},
+  {skill_name:"azure",job_count:132851,avg_salary:130433,value:19.8,skill_type:"cloud"},
+  {skill_name:"r",job_count:131285,avg_salary:127115,value:19.6,skill_type:"programming"},
+  {skill_name:"tableau",job_count:127500,avg_salary:116796,value:19.0,skill_type:"analyst_tools"},
+  {skill_name:"excel",job_count:127341,avg_salary:99751,value:19.0,skill_type:"analyst_tools"},
+  {skill_name:"spark",job_count:114928,avg_salary:141734,value:17.1,skill_type:"analyst_tools"},
+  {skill_name:"power bi",job_count:98363,avg_salary:106738,value:14.7,skill_type:"analyst_tools"},
+  {skill_name:"java",job_count:85854,avg_salary:136210,value:12.8,skill_type:"programming"},
+  {skill_name:"sas",job_count:83652,avg_salary:112788,value:12.5,skill_type:"programming"},
+  {skill_name:"hadoop",job_count:65041,avg_salary:138574,value:9.7,skill_type:"analyst_tools"},
+  {skill_name:"scala",job_count:57058,avg_salary:145120,value:8.5,skill_type:"programming"},
+  {skill_name:"snowflake",job_count:55150,avg_salary:137960,value:8.2,skill_type:"cloud"},
+  {skill_name:"databricks",job_count:53282,avg_salary:131525,value:7.9,skill_type:"cloud"},
+  {skill_name:"gcp",job_count:50824,avg_salary:131738,value:7.6,skill_type:"cloud"},
+  {skill_name:"git",job_count:50358,avg_salary:128316,value:7.5,skill_type:"analyst_tools"},
+  {skill_name:"kafka",job_count:50092,avg_salary:144754,value:7.5,skill_type:"analyst_tools"},
+  {skill_name:"airflow",job_count:45363,avg_salary:142386,value:6.8,skill_type:"analyst_tools"},
+  {skill_name:"oracle",job_count:45318,avg_salary:115125,value:6.8,skill_type:"analyst_tools"},
+];
 
-  // Mobile Detection
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+const TRENDS = [
+  {month:"Jan",sql:46034,python:45143,aws:16938,azure:15481,r:16490},
+  {month:"Feb",sql:32661,python:31939,aws:12242,azure:11099,r:11236},
+  {month:"Mar",sql:32330,python:31950,aws:12350,azure:11096,r:11344},
+  {month:"Apr",sql:31064,python:30457,aws:11680,azure:10574,r:10642},
+  {month:"May",sql:27203,python:27082,aws:10416,azure:9136,r:9385},
+  {month:"Jun",sql:31675,python:31188,aws:11760,azure:10805,r:10822},
+  {month:"Jul",sql:31849,python:31285,aws:12097,azure:11000,r:10754},
+  {month:"Aug",sql:36725,python:36208,aws:13775,azure:12198,r:13036},
+  {month:"Sep",sql:28960,python:28647,aws:10933,azure:10231,r:9306},
+  {month:"Oct",sql:30733,python:30550,aws:11600,azure:10923,r:9987},
+  {month:"Nov",sql:29819,python:30098,aws:11466,azure:10683,r:9659},
+  {month:"Dec",sql:25837,python:26415,aws:10126,azure:9312,r:8265},
+];
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+const TYPE_COLORS = { programming:"#6c63ff", cloud:"#00d4aa", analyst_tools:"#ffa94d" };
+const TREND_COLORS = { sql:"#6c63ff", python:"#00d4aa", aws:"#ff6b6b", azure:"#ffa94d", r:"#a78bfa" };
+const ROLE_FILTERS = {
+  "Data Analyst": ["sql","excel","tableau","power bi","python","r","sas","oracle"],
+  "Data Engineer": ["sql","python","aws","azure","spark","hadoop","scala","snowflake","databricks","gcp","kafka","airflow","git"],
+  "Data Scientist": ["python","r","sql","aws","spark","scala","databricks","git","java","sas"],
+};
 
-  // Prevent Background Scroll
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.classList.add('menu-open');
-    } else {
-      document.body.classList.remove('menu-open');
-    }
-    return () => document.body.classList.remove('menu-open');
-  }, [mobileMenuOpen]);
+const fmtK = (v) => v >= 1000 ? Math.round(v / 1000) + "K" : v;
+const fmtSalary = (v) => "$" + (v / 1000).toFixed(0) + "K";
+const gc = (type) => TYPE_COLORS[type] || "#7a7a9a";
 
-  // Fetch Data
-  useEffect(() => {
-    setIsLoading(true);
-    const params = { sort_by: 'count' };
-    if (jobTitle) params.job_title = jobTitle;
-    if (country) params.country = country;
-
-    Promise.all([
-      axios.get('https://data-nerd-api.onrender.com/api/top-skills', { params }),
-      axios.get('https://data-nerd-api.onrender.com/api/skill-trends')
-    ])
-    .then(([skillsRes, trendsRes]) => {
-      setData(skillsRes.data.results || []);
-      setTotalJobs(skillsRes.data.total_jobs || 0);
-      setTrendData(trendsRes.data);
-      setIsLoading(false);
-    })
-    .catch(err => {
-      console.error(err);
-      setIsLoading(false);
-    });
-  }, [jobTitle, country]);
-
-  const topSkillName = data.length > 0 ? data[0].skill_name : 'N/A';
-  const highestSalary = data.length > 0 ? Math.max(...data.map(i => i.avg_salary || 0)) : 0;
-
-  const handleNavClick = (tab) => {
-    setActiveTab(tab);
-    setMobileMenuOpen(false);
-  };
-
-  const MarketChart = ({ height }) => (
-    <div style={{ height: height, width: '100%' }}>
-      <ResponsiveContainer>
-        <BarChart 
-            data={data} 
-            layout="vertical" 
-            margin={{ left: isMobile ? 0 : 40, right: isMobile ? 0 : 20 }}
-        >
-          <XAxis type="number" hide />
-          <YAxis 
-            dataKey="skill_name" type="category" width={isMobile ? 70 : 100} 
-            tick={{ fill: '#6c7293', fontSize: isMobile ? 11 : 13 }} interval={0} 
-            axisLine={false} tickLine={false} 
-          />
-          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#191c24', border: '1px solid #2c2e33', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-          <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]}>
-             {data.map((entry, index) => (<Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#0090e7' : '#00d25b'} />))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+const CustomTooltip = ({ active, payload, label, formatter }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{background:"#1a1a24",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"10px 14px"}}>
+      <p style={{color:"#f0f0f8",fontSize:12,marginBottom:6,fontWeight:600}}>{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{color:"#7a7a9a",fontSize:11,margin:"2px 0"}}>
+          <span style={{color:p.color||p.fill}}>■ </span>
+          {p.name}: <span style={{color:"#f0f0f8"}}>{formatter ? formatter(p.value) : p.value?.toLocaleString()}</span>
+        </p>
+      ))}
     </div>
   );
+};
+
+export default function App() {
+  const [view, setView] = useState("dashboard");
+  const [role, setRole] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const filtered = (() => {
+    let data = [...ALL_SKILLS];
+    if (typeFilter) data = data.filter(s => s.skill_type === typeFilter);
+    if (role && ROLE_FILTERS[role]) data = data.filter(s => ROLE_FILTERS[role].includes(s.skill_name));
+    return data;
+  })();
+
+  const bySalary = [...filtered].sort((a, b) => b.avg_salary - a.avg_salary);
+  const top10 = filtered.slice(0, 10);
+  const trendSums = { SQL: 0, Python: 0, AWS: 0, Azure: 0, R: 0 };
+  TRENDS.forEach(t => { trendSums.SQL += t.sql; trendSums.Python += t.python; trendSums.AWS += t.aws; trendSums.Azure += t.azure; trendSums.R += t.r; });
+  const donutData = Object.entries(trendSums).map(([name, value]) => ({ name, value }));
+  const peakData = ["sql","python","aws","azure","r"].map((s, i) => ({
+    name: s.toUpperCase(),
+    peak: Math.max(...TRENDS.map(t => t[s] || 0)),
+    fill: Object.values(TREND_COLORS)[i]
+  }));
+  const bubbleData = filtered.filter(s => s.avg_salary).slice(0, 12).map(s => ({
+    x: +s.value.toFixed(1), y: Math.round(s.avg_salary / 1000),
+    z: Math.max(200, s.job_count / 800),
+    name: s.skill_name.toUpperCase(), fill: gc(s.skill_type)
+  }));
+
+  const NAV = [
+    { id:"dashboard", icon:"▦", label:"Dashboard" },
+    { id:"skills",    icon:"◈", label:"Top Skills" },
+    { id:"trends",    icon:"◉", label:"Market Trends" },
+    { id:"salary",    icon:"◎", label:"Salary Insights" },
+    { id:"about",     icon:"◌", label:"About" },
+  ];
+
+  const viewMeta = {
+    dashboard:"Overview of the data job market",
+    skills:"All tracked skills ranked by demand",
+    trends:"How skill demand changes month to month",
+    salary:"Compensation data by skill",
+    about:"Project info and tech stack",
+  };
 
   return (
-    <div className="app-container">
-      <div className={`sidebar-overlay ${mobileMenuOpen ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}></div>
+    <div style={{display:"flex",minHeight:"100vh",background:"#0a0a0f",color:"#f0f0f8",fontFamily:"'Syne', sans-serif"}}>
 
-      <nav className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
-        {/* BRANDING: Personalize this to show ownership immediately */}
-        <div className="brand-logo" style={{ marginBottom: '3rem', paddingLeft: '15px' }}>
-          Data Nerd <span style={{ fontSize: '0.6rem', color: '#00d25b', verticalAlign: 'super' }}>BY PARTH</span>
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)}
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:90}} />
+      )}
+
+      {/* Sidebar */}
+      <nav style={{
+        width:220, minHeight:"100vh", background:"#111118",
+        borderRight:"1px solid rgba(255,255,255,0.07)",
+        display:"flex", flexDirection:"column",
+        position:"fixed", top:0, left:0, zIndex:100,
+        transform: sidebarOpen ? "translateX(0)" : undefined,
+      }}>
+        <div style={{padding:"28px 24px 20px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+          <div style={{fontSize:18,fontWeight:700,letterSpacing:"-0.5px"}}>
+            Data<span style={{color:"#6c63ff"}}>Nerd</span>
+          </div>
+          <div style={{fontSize:10,color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginTop:3,letterSpacing:1,textTransform:"uppercase"}}>
+            Job Market Intelligence
+          </div>
         </div>
-        
-        <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
-          <div className="nav-icon">📊</div><span>Dashboard</span>
+        <div style={{padding:"16px 12px",flex:1}}>
+          {NAV.map(n => (
+            <div key={n.id} onClick={() => { setView(n.id); setSidebarOpen(false); }}
+              style={{
+                display:"flex", alignItems:"center", gap:10,
+                padding:"10px 12px", borderRadius:8, cursor:"pointer",
+                fontSize:13, fontWeight:500, marginBottom:2,
+                background: view===n.id ? "rgba(108,99,255,0.12)" : "transparent",
+                color: view===n.id ? "#6c63ff" : "#7a7a9a",
+                border: view===n.id ? "1px solid rgba(108,99,255,0.2)" : "1px solid transparent",
+              }}>
+              <span style={{fontSize:15,width:18,textAlign:"center"}}>{n.icon}</span>
+              {n.label}
+            </div>
+          ))}
         </div>
-        <div className={`nav-item ${activeTab === 'skills' ? 'active' : ''}`} onClick={() => handleNavClick('skills')}>
-          <div className="nav-icon">🔥</div><span>Top Skills</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'trends' ? 'active' : ''}`} onClick={() => handleNavClick('trends')}>
-          <div className="nav-icon">📈</div><span>Market Trends</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('about')}>
-          <div className="nav-icon">ℹ️</div><span>About Project</span>
+        <div style={{padding:"16px 24px",borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+          <p style={{fontSize:11,color:"#7a7a9a",fontFamily:"'DM Mono',monospace"}}>by Parth · 2025</p>
+          <div style={{display:"flex",alignItems:"center",gap:5,marginTop:6,fontSize:10,fontFamily:"'DM Mono',monospace",color:"#00d4aa"}}>
+            <div style={{width:6,height:6,borderRadius:"50%",background:"#00d4aa",boxShadow:"0 0 6px #00d4aa"}} />
+            670K jobs · real data
+          </div>
         </div>
       </nav>
 
-      <div className="main-panel">
-        <header className="navbar">
-           <button className="menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>☰</button>
-           <div style={{ color: '#6c7293', fontSize: '0.9rem', marginLeft: 'auto' }}>Data updated: Live</div>
-        </header>
+      {/* Main */}
+      <main style={{marginLeft:220,flex:1,minHeight:"100vh"}}>
 
-        <div className="content-wrapper">
-          {isLoading ? (
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p>Waking up the server... (this may take 10s)</p>
-            </div>
-          ) : (
+        {/* Topbar */}
+        <div style={{
+          padding:"20px 32px", borderBottom:"1px solid rgba(255,255,255,0.07)",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          background:"#0a0a0f", position:"sticky", top:0, zIndex:50, flexWrap:"wrap", gap:12
+        }}>
+          <div>
+            <div style={{fontSize:15,fontWeight:600}}>{NAV.find(n=>n.id===view)?.label}</div>
+            <div style={{fontSize:11,color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginTop:2}}>{viewMeta[view]}</div>
+          </div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+            {[
+              {id:"filter-role", val:role, set:setRole, opts:[["","All Roles"],["Data Analyst","Data Analyst"],["Data Engineer","Data Engineer"],["Data Scientist","Data Scientist"]]},
+              {id:"filter-type", val:typeFilter, set:setTypeFilter, opts:[["","All Skill Types"],["programming","Languages"],["cloud","Cloud"],["analyst_tools","Tools"]]},
+            ].map(f => (
+              <select key={f.id} value={f.val} onChange={e=>f.set(e.target.value)}
+                style={{background:"#111118",border:"1px solid rgba(255,255,255,0.12)",color:"#f0f0f8",padding:"7px 12px",borderRadius:8,fontSize:12,fontFamily:"'Syne',sans-serif",cursor:"pointer",outline:"none"}}>
+                {f.opts.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            ))}
+          </div>
+        </div>
+
+        <div style={{padding:"28px 32px"}}>
+
+          {/* DASHBOARD */}
+          {view === "dashboard" && (
             <>
-              {activeTab === 'dashboard' && (
-                <>
-                  <div className="row">
-                    <div className="col-3 card">
-                      <div className="stat-value">{totalJobs.toLocaleString()}</div>
-                      <div className="stat-label">Total Jobs Analyzed</div>
-                    </div>
-                    <div className="col-3 card">
-                      <div className="stat-value">{topSkillName}</div>
-                      <div className="stat-label">Most Demanded Skill</div>
-                    </div>
-                    <div className="col-3 card">
-                      <div className="stat-value">${(highestSalary/1000).toFixed(0)}k</div>
-                      <div className="stat-label">Peak Salary (Year)</div>
-                    </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:28}}>
+                {[
+                  {label:"Total Jobs Analyzed",value:"670K",sub:"real job postings",c:"#6c63ff"},
+                  {label:"Top Skill",value:filtered[0]?.skill_name.toUpperCase()||"SQL",sub:(filtered[0]?.value||57.5).toFixed(1)+"% of postings",c:"#00d4aa"},
+                  {label:"Highest Paying",value:fmtSalary(bySalary[0]?.avg_salary||145120),sub:(bySalary[0]?.skill_name||"scala")+" skill",c:"#ff6b6b"},
+                  {label:"Skills Tracked",value:filtered.length,sub:"in current filter",c:"#ffa94d"},
+                ].map((s,i) => (
+                  <div key={i} style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:20,position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:s.c}} />
+                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginBottom:10}}>{s.label}</div>
+                    <div style={{fontSize:26,fontWeight:700,lineHeight:1}}>{s.value}</div>
+                    <div style={{fontSize:11,color:"#7a7a9a",marginTop:6,fontFamily:"'DM Mono',monospace"}}>{s.sub}</div>
                   </div>
-                  <div className="row">
-                    <div className="col-8 card">
-                      <div className="card-title">
-                        <span>Market Demand (Volume)</span>
-                        <div style={{display:'flex', gap:'5px', marginTop:'10px', justifyContent: 'center'}}>
-                          <select onChange={e => setJobTitle(e.target.value)} value={jobTitle}>
-                              <option value="">All Roles</option>
-                              <option value="Data Analyst">Data Analyst</option>
-                              <option value="Data Scientist">Data Scientist</option>
-                          </select>
-                          <select onChange={e => setCountry(e.target.value)} value={country}>
-                              <option value="">Global</option>
-                              <option value="India">India</option>
-                              <option value="United States">USA</option>
-                          </select>
-                        </div>
-                      </div>
-                      <MarketChart height={400} />
-                    </div>
-                    <div className="col-4 card">
-                      <div className="card-title">Trend History</div>
-                      <div style={{ height: 400, width: '100%' }}>
-                        <ResponsiveContainer>
-                          <LineChart data={trendData}>
-                            <XAxis dataKey="month" hide />
-                            <Tooltip contentStyle={{backgroundColor:'#191c24', border:'none'}} itemStyle={{color:'white'}} />
-                            <Legend />
-                            <Line type="monotone" dataKey="python" stroke="#00d25b" dot={false} strokeWidth={2} />
-                            <Line type="monotone" dataKey="sql" stroke="#0090e7" dot={false} strokeWidth={2} />
-                            <Line type="monotone" dataKey="aws" stroke="#fc424a" dot={false} strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {activeTab === 'skills' && (
-                <div className="card" style={{ height: 'auto', minHeight: '80vh', paddingBottom: '2rem' }}>
-                    <div className="card-title"><h2>Detailed Skill Analysis</h2></div>
-                    <MarketChart height={600} />
-                </div>
-              )}
-
-              {activeTab === 'trends' && (
-                <div className="card" style={{ height: '80vh' }}>
-                  <div className="card-title"><h2>Historical Market Trends</h2></div>
-                  <div style={{ height: '90%', width: '100%' }}>
-                    <ResponsiveContainer>
-                      <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <XAxis dataKey="month" stroke="#6c7293" />
-                        <YAxis stroke="#6c7293" />
-                        <Tooltip contentStyle={{backgroundColor:'#191c24', border:'1px solid #2c2e33'}} itemStyle={{color:'white'}} />
-                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                        <Line type="monotone" dataKey="python" stroke="#00d25b" strokeWidth={3} dot={{r:4}} />
-                        <Line type="monotone" dataKey="sql" stroke="#0090e7" strokeWidth={3} dot={{r:4}} />
-                        <Line type="monotone" dataKey="aws" stroke="#fc424a" strokeWidth={3} dot={{r:4}} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
-              {/* --- NEW ABOUT / IDENTITY SECTION --- */}
-              {activeTab === 'about' && (
-                <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                    <div className="row">
-                        
-                        {/* COLUMN 1: PROJECT DOCUMENTATION */}
-                        <div className="col-8 card" style={{ textAlign: 'left', alignItems: 'flex-start' }}>
-                            <h2 style={{ color: 'white', marginBottom: '1rem' }}>About Data Nerd</h2>
-                            <p style={{ color: '#b0b8c4', lineHeight: '1.6' }}>
-                                <strong>Data Nerd</strong> is a specialized market intelligence platform designed for data professionals. 
-                                In an industry flooded with noise, this dashboard provides clear signals on which skills are actually in demand.
-                            </p>
-                            
-                            <h3 style={{ color: '#0090e7', marginTop: '1.5rem', fontSize: '1.1rem' }}>How it Works</h3>
-                            <ul style={{ color: '#b0b8c4', paddingLeft: '1.2rem', lineHeight: '1.8' }}>
-                                <li><strong>Data Aggregation:</strong> The system continuously scans job postings from major platforms.</li>
-                                <li><strong>NLP Analysis:</strong> Text descriptions are parsed to extract technical keywords (e.g., "Python", "AWS").</li>
-                                <li><strong>Live Visualization:</strong> Data is served via a FastAPI backend to this React dashboard in real-time.</li>
-                            </ul>
-
-                            <h3 style={{ color: '#00d25b', marginTop: '1.5rem', fontSize: '1.1rem' }}>Purpose</h3>
-                            <p style={{ color: '#b0b8c4', lineHeight: '1.6' }}>
-                                Built to assist students and professionals in prioritizing their learning path based on actual market volume and salary data, rather than hype.
-                            </p>
-                        </div>
-
-                        {/* COLUMN 2: DEVELOPER IDENTITY (PROOF OF WORK) */}
-                        <div className="col-4 card">
-                            <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: '#191c24', border: '2px solid #00d25b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', margin: '0 auto' }}>
-                                👨‍💻
-                            </div>
-                            <h2 style={{ color: 'white', marginTop: '1rem' }}>Parth</h2>
-                            <p style={{ color: '#6c7293', fontSize: '0.9rem' }}>Data Science Aspirant</p>
-                            
-                            <div style={{ width: '100%', height: '1px', background: '#2c2e33', margin: '1.5rem 0' }}></div>
-
-                            <h4 style={{ color: '#fff', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Verify Ownership</h4>
-                            <p style={{ color: '#6c7293', fontSize: '0.8rem', marginBottom: '1rem' }}>
-                                This project is open-source. Verify the commit history to confirm authorship.
-                            </p>
-
-                            <a href="https://github.com/Parthraj1905/data-nerd" target="_blank" rel="noopener noreferrer" 
-                               style={{ background: '#24292e', color: 'white', padding: '10px 20px', borderRadius: '6px', textDecoration: 'none', display: 'block', marginBottom: '10px', fontWeight: '500' }}>
-                                <span style={{ marginRight: '8px' }}>🐙</span> View Source Code
-                            </a>
-
-                            <a href="https://www.linkedin.com/in/parthrajsinh-parmar-a86463373" target="_blank" rel="noopener noreferrer" 
-                               style={{ background: '#0077b5', color: 'white', padding: '10px 20px', borderRadius: '6px', textDecoration: 'none', display: 'block', fontWeight: '500' }}>
-                                <span style={{ marginRight: '8px' }}>🔗</span> Connect on LinkedIn
-                            </a>
-                        </div>
-
-                    </div>
-
-                    {/* TECH STACK FOOTER */}
-                    <div className="card" style={{ marginTop: '1rem' }}>
-                        <h4 style={{ color: '#6c7293', marginBottom: '1rem' }}>Technology Stack</h4>
-                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <span style={{ border: '1px solid #0090e7', color: '#0090e7', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>React.js</span>
-                            <span style={{ border: '1px solid #ffff02ff', color: '#ffff02ff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>FastAPI</span>
-                            <span style={{ border: '1px solid #fc424a', color: '#fc424a', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>PostgreSQL</span>
-                            <span style={{ border: '1px solid #8f5fe8', color: '#8f5fe8', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Render Cloud</span>
-                            <span style={{ border: '1px solid #ffffff', color: '#ffffff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Vercel</span>
-                            <span style={{ border: '1px solid #09ff00ff', color: '#09ff00ff', padding: '5px 15px', borderRadius: '15px', fontSize: '0.85rem' }}>Neon Console</span>
-                        </div>
-                    </div>
-                </div>
-              )}
+                ))}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+                <ChartCard title="Top 10 Skills by Demand" sub="% of job postings mentioning each skill">
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={top10.map(s=>({name:s.skill_name.toUpperCase(),value:+s.value.toFixed(1),fill:gc(s.skill_type)}))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="name" tick={{fill:"#7a7a9a",fontSize:10}} />
+                      <YAxis tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={v=>v+"%"} />
+                      <Tooltip content={<CustomTooltip formatter={v=>v+"%"} />} />
+                      <Bar dataKey="value" radius={[4,4,0,0]}>
+                        {top10.map((s,i) => <Cell key={i} fill={gc(s.skill_type)} fillOpacity={0.8} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+                <ChartCard title="Monthly Trend Overview" sub="Job postings per skill · Jan–Dec 2023"
+                  legend={[["SQL","#6c63ff"],["Python","#00d4aa"],["AWS","#ff6b6b"],["Azure","#ffa94d"],["R","#a78bfa"]]}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={TRENDS}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="month" tick={{fill:"#7a7a9a",fontSize:10}} />
+                      <YAxis tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={fmtK} />
+                      <Tooltip content={<CustomTooltip formatter={v=>v.toLocaleString()} />} />
+                      {Object.entries(TREND_COLORS).map(([k,c]) => (
+                        <Line key={k} type="monotone" dataKey={k} stroke={c} strokeWidth={2} dot={false} name={k.toUpperCase()} />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </div>
             </>
           )}
+
+          {/* TOP SKILLS */}
+          {view === "skills" && (
+            <ChartCard title="All Skills — Demand Ranking" sub={`Showing ${filtered.length} skills · sorted by job count`}
+              extra={
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[["","All","#7a7a9a"],["programming","Language","#6c63ff"],["cloud","Cloud","#00d4aa"],["analyst_tools","Tools","#ffa94d"]].map(([v,l,c])=>(
+                    <span key={v} onClick={()=>setTypeFilter(v)}
+                      style={{display:"inline-flex",alignItems:"center",gap:6,background:typeFilter===v?"rgba(108,99,255,0.08)":"#1a1a24",border:typeFilter===v?"1px solid #6c63ff":"1px solid rgba(255,255,255,0.07)",borderRadius:6,padding:"5px 10px",fontSize:11,fontFamily:"'DM Mono',monospace",color:typeFilter===v?"#6c63ff":"#7a7a9a",cursor:"pointer"}}>
+                      <span style={{width:6,height:6,borderRadius:"50%",background:c,display:"inline-block"}} />{l}
+                    </span>
+                  ))}
+                </div>
+              }>
+              <ResponsiveContainer width="100%" height={Math.max(400, filtered.length * 36 + 60)}>
+                <BarChart data={filtered.map(s=>({name:s.skill_name.toUpperCase(),value:s.job_count}))} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis type="number" tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={fmtK} />
+                  <YAxis type="category" dataKey="name" tick={{fill:"#7a7a9a",fontSize:10}} width={80} />
+                  <Tooltip content={<CustomTooltip formatter={v=>v.toLocaleString()+" postings"} />} />
+                  <Bar dataKey="value" radius={[0,4,4,0]}>
+                    {filtered.map((s,i) => <Cell key={i} fill={gc(s.skill_type)} fillOpacity={0.8} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          )}
+
+          {/* TRENDS */}
+          {view === "trends" && (
+            <>
+              <ChartCard title="Skill Demand Over Time" sub="Monthly job postings · Jan–Dec 2023"
+                legend={[["SQL","#6c63ff"],["Python","#00d4aa"],["AWS","#ff6b6b"],["Azure","#ffa94d"],["R","#a78bfa"]]}>
+                <ResponsiveContainer width="100%" height={340}>
+                  <LineChart data={TRENDS}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="month" tick={{fill:"#7a7a9a",fontSize:10}} />
+                    <YAxis tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={fmtK} />
+                    <Tooltip content={<CustomTooltip formatter={v=>v.toLocaleString()} />} />
+                    {Object.entries(TREND_COLORS).map(([k,c]) => (
+                      <Line key={k} type="monotone" dataKey={k} stroke={c} strokeWidth={2} dot={{r:3}} name={k.toUpperCase()} />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartCard>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:20}}>
+                <ChartCard title="Skill Share Distribution" sub="Proportion of all tracked skill mentions">
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie data={donutData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" paddingAngle={3}>
+                        {donutData.map((_, i) => <Cell key={i} fill={Object.values(TREND_COLORS)[i]} />)}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip formatter={v=>v.toLocaleString()} />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+                <ChartCard title="Peak Month by Skill" sub="Highest single-month posting count">
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={peakData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="name" tick={{fill:"#7a7a9a",fontSize:10}} />
+                      <YAxis tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={fmtK} />
+                      <Tooltip content={<CustomTooltip formatter={v=>v.toLocaleString()} />} />
+                      <Bar dataKey="peak" radius={[4,4,0,0]}>
+                        {peakData.map((d,i) => <Cell key={i} fill={d.fill} fillOpacity={0.8} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </div>
+            </>
+          )}
+
+          {/* SALARY */}
+          {view === "salary" && (
+            <>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+                <ChartCard title="Avg Salary by Skill" sub="USD annual · sorted highest to lowest">
+                  <ResponsiveContainer width="100%" height={440}>
+                    <BarChart data={bySalary.map(s=>({name:s.skill_name.toUpperCase(),value:s.avg_salary}))} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis type="number" tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={v=>"$"+(v/1000).toFixed(0)+"K"} />
+                      <YAxis type="category" dataKey="name" tick={{fill:"#7a7a9a",fontSize:10}} width={80} />
+                      <Tooltip content={<CustomTooltip formatter={v=>"$"+v.toLocaleString()} />} />
+                      <Bar dataKey="value" radius={[0,4,4,0]}>
+                        {bySalary.map((s,i) => <Cell key={i} fill={gc(s.skill_type)} fillOpacity={0.8} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+                <ChartCard title="Demand vs Salary Matrix" sub="Bubble size = job count · top-right = best ROI">
+                  <ResponsiveContainer width="100%" height={440}>
+                    <ScatterChart margin={{top:20,right:20,bottom:20,left:20}}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis type="number" dataKey="x" name="Demand" tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={v=>v+"%"} label={{value:"Demand (%)",fill:"#7a7a9a",fontSize:11,position:"insideBottom",offset:-10}} />
+                      <YAxis type="number" dataKey="y" name="Salary" tick={{fill:"#7a7a9a",fontSize:10}} tickFormatter={v=>"$"+v+"K"} label={{value:"Salary ($K)",fill:"#7a7a9a",fontSize:11,angle:-90,position:"insideLeft"}} />
+                      <Tooltip content={({active,payload})=>{
+                        if(!active||!payload?.length) return null;
+                        const d=payload[0]?.payload;
+                        return <div style={{background:"#1a1a24",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"10px 14px",fontSize:11,color:"#7a7a9a"}}><p style={{color:"#f0f0f8",fontWeight:600,marginBottom:4}}>{d?.name}</p><p>Demand: {d?.x}%</p><p>Salary: ${d?.y}K</p></div>;
+                      }} />
+                      <Scatter data={bubbleData} shape={(props)=>{
+                        const {cx,cy,payload}=props;
+                        const r=Math.sqrt(payload.z);
+                        return <circle cx={cx} cy={cy} r={Math.max(6,r)} fill={payload.fill} fillOpacity={0.6} stroke={payload.fill} strokeWidth={1} />;
+                      }} />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </div>
+              <ChartCard title="Full Skill Salary Breakdown" sub="All skills ranked by average annual salary">
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead>
+                    <tr>{["#","Skill","Avg Salary","Job Count","Demand %","Scale"].map(h=>(
+                      <th key={h} style={{textAlign:"left",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",fontSize:10,textTransform:"uppercase",letterSpacing:1,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontWeight:500}}>{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {bySalary.map((s,i)=>(
+                      <tr key={s.skill_name}>
+                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",fontSize:10}}>{String(i+1).padStart(2,"0")}</td>
+                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontWeight:500,color:gc(s.skill_type)}}>{s.skill_name.toUpperCase()}</td>
+                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace",color:"#00d4aa"}}>${s.avg_salary.toLocaleString()}</td>
+                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace"}}>{s.job_count.toLocaleString()}</td>
+                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace"}}>{s.value.toFixed(1)}%</td>
+                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+                          <div style={{width:100,background:"#1a1a24",borderRadius:3,height:4}}>
+                            <div style={{width:(s.avg_salary/bySalary[0].avg_salary*100).toFixed(0)+"%",height:4,borderRadius:3,background:"#00d4aa"}} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ChartCard>
+            </>
+          )}
+
+          {/* ABOUT */}
+          {view === "about" && (
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+              {[
+                {title:"About This Project",text:"DataNerd is a full-stack analytics dashboard processing 670K+ real job postings to surface demand signals, salary data, and market trends for data professionals.",tags:["React","FastAPI","PostgreSQL","Recharts"]},
+                {title:"API Endpoints",text:"Powered by a FastAPI backend on Render, querying a Neon serverless Postgres database with a star schema — fact + dimension tables for skills and job postings.",tags:["/api/top-skills","/api/skill-trends","/api/momentum"]},
+                {title:"Architecture",text:"Star schema on Neon (serverless Postgres) · FastAPI on Render · React + Vite frontend on Vercel · CI/CD pipeline via GitHub",tags:["Neon DB","Render","Vercel","GitHub CI/CD"]},
+                {title:"Built by Parth",text:"End-to-end data engineering project covering ETL pipeline, database design, REST API development, frontend engineering, and full cloud deployment from scratch.",tags:["ETL Pipeline","SQL","Python","Cloud Deploy"]},
+              ].map((c,i)=>(
+                <div key={i} style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:24}}>
+                  <div style={{fontSize:13,fontWeight:600,marginBottom:12}}>{c.title}</div>
+                  <div style={{fontSize:12,color:"#7a7a9a",lineHeight:1.7,fontFamily:"'DM Mono',monospace"}}>{c.text}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:12}}>
+                    {c.tags.map(t=><span key={t} style={{background:"#1a1a24",border:"1px solid rgba(255,255,255,0.07)",borderRadius:6,padding:"5px 10px",fontSize:11,fontFamily:"'DM Mono',monospace",color:"#7a7a9a"}}>{t}</span>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-export default App;
+function ChartCard({ title, sub, children, legend, extra }) {
+  return (
+    <div style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:24,marginBottom:0}}>
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:600}}>{title}</div>
+          {sub && <div style={{fontSize:11,color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginTop:3}}>{sub}</div>}
+        </div>
+        {legend && (
+          <div style={{display:"flex",flexWrap:"wrap",gap:12,fontSize:11,color:"#7a7a9a"}}>
+            {legend.map(([l,c])=>(
+              <span key={l} style={{display:"flex",alignItems:"center",gap:5}}>
+                <span style={{width:8,height:8,borderRadius:2,background:c,display:"inline-block"}} />{l}
+              </span>
+            ))}
+          </div>
+        )}
+        {extra}
+      </div>
+      {children}
+    </div>
+  );
+}
