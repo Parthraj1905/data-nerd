@@ -71,11 +71,22 @@ const CustomTooltip = ({ active, payload, label, formatter }) => {
   );
 };
 
+function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const fn = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return width;
+}
+
 export default function App() {
   const [view, setView] = useState("dashboard");
   const [role, setRole] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useWindowWidth() <= 900;
 
   const filtered = (() => {
     let data = [...ALL_SKILLS];
@@ -119,10 +130,10 @@ export default function App() {
   return (
     <div style={{display:"flex",minHeight:"100vh",background:"#0a0a0f",color:"#f0f0f8",fontFamily:"'Syne', sans-serif"}}>
 
-      {/* Overlay */}
-      {sidebarOpen && (
+      {/* Overlay — mobile only */}
+      {isMobile && sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:90}} />
+          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:90,backdropFilter:"blur(2px)"}} />
       )}
 
       {/* Sidebar */}
@@ -131,7 +142,8 @@ export default function App() {
         borderRight:"1px solid rgba(255,255,255,0.07)",
         display:"flex", flexDirection:"column",
         position:"fixed", top:0, left:0, zIndex:100,
-        transform: sidebarOpen ? "translateX(0)" : undefined,
+        transform: isMobile ? (sidebarOpen ? "translateX(0)" : "translateX(-100%)") : "translateX(0)",
+        transition:"transform 0.3s ease",
       }}>
         <div style={{padding:"28px 24px 20px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <div style={{fontSize:18,fontWeight:700,letterSpacing:"-0.5px"}}>
@@ -167,17 +179,26 @@ export default function App() {
       </nav>
 
       {/* Main */}
-      <main style={{marginLeft:220,flex:1,minHeight:"100vh"}}>
+      <main style={{marginLeft: isMobile ? 0 : 220, flex:1, minHeight:"100vh", minWidth:0}}>
 
         {/* Topbar */}
         <div style={{
-          padding:"20px 32px", borderBottom:"1px solid rgba(255,255,255,0.07)",
+          padding: isMobile ? "14px 16px" : "20px 32px",
+          borderBottom:"1px solid rgba(255,255,255,0.07)",
           display:"flex", alignItems:"center", justifyContent:"space-between",
           background:"#0a0a0f", position:"sticky", top:0, zIndex:50, flexWrap:"wrap", gap:12
         }}>
-          <div>
-            <div style={{fontSize:15,fontWeight:600}}>{NAV.find(n=>n.id===view)?.label}</div>
-            <div style={{fontSize:11,color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginTop:2}}>{viewMeta[view]}</div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            {isMobile && (
+              <button onClick={() => setSidebarOpen(true)}
+                style={{background:"transparent",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:"#f0f0f8",fontSize:16,lineHeight:1}}>
+                ☰
+              </button>
+            )}
+            <div>
+              <div style={{fontSize:15,fontWeight:600}}>{NAV.find(n=>n.id===view)?.label}</div>
+              <div style={{fontSize:11,color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginTop:2}}>{viewMeta[view]}</div>
+            </div>
           </div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
             {[
@@ -192,27 +213,27 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{padding:"28px 32px"}}>
+        <div style={{padding: isMobile ? "16px" : "28px 32px"}}>
 
           {/* DASHBOARD */}
           {view === "dashboard" && (
             <>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:28}}>
+              <div style={{display:"grid",gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",gap:isMobile?12:16,marginBottom:28}}>
                 {[
                   {label:"Total Jobs Analyzed",value:"670K",sub:"real job postings",c:"#6c63ff"},
                   {label:"Top Skill",value:filtered[0]?.skill_name.toUpperCase()||"SQL",sub:(filtered[0]?.value||57.5).toFixed(1)+"% of postings",c:"#00d4aa"},
                   {label:"Highest Paying",value:fmtSalary(bySalary[0]?.avg_salary||145120),sub:(bySalary[0]?.skill_name||"scala")+" skill",c:"#ff6b6b"},
                   {label:"Skills Tracked",value:filtered.length,sub:"in current filter",c:"#ffa94d"},
                 ].map((s,i) => (
-                  <div key={i} style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:20,position:"relative",overflow:"hidden"}}>
+                  <div key={i} style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding: isMobile ? 14 : 20,position:"relative",overflow:"hidden",minWidth:0}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:s.c}} />
-                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginBottom:10}}>{s.label}</div>
-                    <div style={{fontSize:26,fontWeight:700,lineHeight:1}}>{s.value}</div>
-                    <div style={{fontSize:11,color:"#7a7a9a",marginTop:6,fontFamily:"'DM Mono',monospace"}}>{s.sub}</div>
+                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:"1.2px",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginBottom:8,lineHeight:1.4}}>{s.label}</div>
+                    <div style={{fontSize: isMobile ? 20 : 26,fontWeight:700,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.value}</div>
+                    <div style={{fontSize:10,color:"#7a7a9a",marginTop:6,fontFamily:"'DM Mono',monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.sub}</div>
                   </div>
                 ))}
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+              <div style={{display:"grid",gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",gap:20}}>
                 <ChartCard title="Top 10 Skills by Demand" sub="% of job postings mentioning each skill">
                   <ResponsiveContainer width="100%" height={320}>
                     <BarChart data={top10.map(s=>({name:s.skill_name.toUpperCase(),value:+s.value.toFixed(1),fill:gc(s.skill_type)}))}>
@@ -288,7 +309,7 @@ export default function App() {
                   </LineChart>
                 </ResponsiveContainer>
               </ChartCard>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginTop:20}}>
+              <div style={{display:"grid",gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",gap:20,marginTop:20}}>
                 <ChartCard title="Skill Share Distribution" sub="Proportion of all tracked skill mentions">
                   <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
@@ -319,7 +340,7 @@ export default function App() {
           {/* SALARY */}
           {view === "salary" && (
             <>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+              <div style={{display:"grid",gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",gap:20,marginBottom:20}}>
                 <ChartCard title="Avg Salary by Skill" sub="USD annual · sorted highest to lowest">
                   <ResponsiveContainer width="100%" height={440}>
                     <BarChart data={bySalary.map(s=>({name:s.skill_name.toUpperCase(),value:s.avg_salary}))} layout="vertical">
@@ -383,7 +404,7 @@ export default function App() {
 
           {/* ABOUT */}
           {view === "about" && (
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+            <div style={{display:"grid",gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",gap:20}}>
               {[
                 {title:"About This Project",text:"DataNerd is a full-stack analytics dashboard processing 670K+ real job postings to surface demand signals, salary data, and market trends for data professionals.",tags:["React","FastAPI","PostgreSQL","Recharts"]},
                 {title:"API Endpoints",text:"Powered by a FastAPI backend on Render, querying a Neon serverless Postgres database with a star schema — fact + dimension tables for skills and job postings.",tags:["/api/top-skills","/api/skill-trends","/api/momentum"]},
