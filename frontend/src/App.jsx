@@ -4,6 +4,7 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from "recharts";
+import './mobile.css';
 
 const ALL_SKILLS = [
   {skill_name:"sql",job_count:385750,avg_salary:124935,value:57.5,skill_type:"programming"},
