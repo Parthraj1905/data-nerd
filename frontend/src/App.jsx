@@ -138,12 +138,13 @@ export default function App() {
 
       {/* Sidebar */}
       <nav style={{
-        width:220, minHeight:"100vh", background:"#111118",
+        width:220, minHeight:"100vh", height:"100vh", background:"#111118",
         borderRight:"1px solid rgba(255,255,255,0.07)",
         display:"flex", flexDirection:"column",
         position:"fixed", top:0, left:0, zIndex:100,
         transform: isMobile ? (sidebarOpen ? "translateX(0)" : "translateX(-100%)") : "translateX(0)",
         transition:"transform 0.3s ease",
+        overflowY:"auto",
       }}>
         <div style={{padding:"28px 24px 20px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <div style={{fontSize:18,fontWeight:700,letterSpacing:"-0.5px"}}>
