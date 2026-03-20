@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  Tooltip, ResponsiveContainer,
 } from "recharts";
-import './mobile.css';
 
 const ALL_SKILLS = [
   {skill_name:"sql",job_count:385750,avg_salary:124935,value:57.5,skill_type:"programming"},
@@ -55,6 +54,26 @@ const ROLE_FILTERS = {
 const fmtK = (v) => v >= 1000 ? Math.round(v / 1000) + "K" : v;
 const fmtSalary = (v) => "$" + (v / 1000).toFixed(0) + "K";
 const gc = (type) => TYPE_COLORS[type] || "#7a7a9a";
+
+const CSS = `
+  #root { max-width:none !important; padding:0 !important; margin:0 !important; text-align:left !important; }
+  .dn-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:90; backdrop-filter:blur(2px); }
+  .dn-overlay.show { display:block; }
+  .dn-sidebar { width:220px; height:100vh; background:#111118; border-right:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; position:fixed; top:0; left:0; z-index:100; transition:transform 0.3s ease; overflow-y:auto; }
+  .dn-main { margin-left:220px; flex:1; min-height:100vh; min-width:0; }
+  .dn-hamburger { display:none; background:transparent; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:6px 10px; cursor:pointer; color:#f0f0f8; font-size:16px; line-height:1; }
+  .dn-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .dn-charts2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .dn-charts1 { display:grid; grid-template-columns:1fr; gap:20px; }
+  @media (max-width:900px) {
+    .dn-sidebar { transform:translateX(-100%); }
+    .dn-sidebar.open { transform:translateX(0) !important; }
+    .dn-main { margin-left:0 !important; }
+    .dn-hamburger { display:flex !important; align-items:center; }
+    .dn-stats { grid-template-columns:repeat(2,1fr) !important; gap:12px !important; }
+    .dn-charts2 { grid-template-columns:1fr !important; }
+  }
+`;
 
 const CustomTooltip = ({ active, payload, label, formatter }) => {
   if (!active || !payload?.length) return null;
@@ -118,23 +137,13 @@ export default function App() {
 
   return (
     <div style={{display:"flex",minHeight:"100vh",background:"#0a0a0f",color:"#f0f0f8",fontFamily:"'Syne', sans-serif"}}>
+      <style>{CSS}</style>
 
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:90,backdropFilter:"blur(2px)"}} />
-      )}
+      {/* Overlay — closes sidebar on mobile */}
+      <div className={`dn-overlay${sidebarOpen ? " show" : ""}`} onClick={() => setSidebarOpen(false)} />
 
       {/* Sidebar */}
-      <nav style={{
-        width:220, height:"100vh", background:"#111118",
-        borderRight:"1px solid rgba(255,255,255,0.07)",
-        display:"flex", flexDirection:"column",
-        position:"fixed", top:0, left:0, zIndex:100,
-        transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
-        transition:"transform 0.3s ease",
-        overflowY:"auto",
-      }}>
+      <nav className={`dn-sidebar${sidebarOpen ? " open" : ""}`}>
         <div style={{padding:"28px 24px 20px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <div style={{fontSize:18,fontWeight:700,letterSpacing:"-0.5px"}}>
             Data<span style={{color:"#6c63ff"}}>Nerd</span>
@@ -169,20 +178,17 @@ export default function App() {
       </nav>
 
       {/* Main */}
-      <main style={{marginLeft:0, flex:1, minHeight:"100vh", minWidth:0}}>
+      <main className="dn-main">
 
         {/* Topbar */}
         <div style={{
-          padding:"14px 16px",
+          padding:"20px 32px",
           borderBottom:"1px solid rgba(255,255,255,0.07)",
           display:"flex", alignItems:"center", justifyContent:"space-between",
           background:"#0a0a0f", position:"sticky", top:0, zIndex:50, flexWrap:"wrap", gap:12
         }}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <button onClick={() => setSidebarOpen(true)}
-              style={{background:"transparent",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:"#f0f0f8",fontSize:16,lineHeight:1}}>
-              ☰
-            </button>
+            <button className="dn-hamburger" onClick={() => setSidebarOpen(true)}>☰</button>
             <div>
               <div style={{fontSize:15,fontWeight:600}}>{NAV.find(n=>n.id===view)?.label}</div>
               <div style={{fontSize:11,color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginTop:2}}>{viewMeta[view]}</div>
@@ -201,27 +207,27 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{padding:"16px"}}>
+        <div style={{padding:"28px 32px"}}>
 
           {/* DASHBOARD */}
           {view === "dashboard" && (
             <>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,marginBottom:28}}>
+              <div className="dn-stats">
                 {[
                   {label:"Total Jobs Analyzed",value:"670K",sub:"real job postings",c:"#6c63ff"},
                   {label:"Top Skill",value:filtered[0]?.skill_name.toUpperCase()||"SQL",sub:(filtered[0]?.value||57.5).toFixed(1)+"% of postings",c:"#00d4aa"},
                   {label:"Highest Paying",value:fmtSalary(bySalary[0]?.avg_salary||145120),sub:(bySalary[0]?.skill_name||"scala")+" skill",c:"#ff6b6b"},
                   {label:"Skills Tracked",value:filtered.length,sub:"in current filter",c:"#ffa94d"},
                 ].map((s,i) => (
-                  <div key={i} style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:14,position:"relative",overflow:"hidden",minWidth:0}}>
+                  <div key={i} style={{background:"#111118",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:20,position:"relative",overflow:"hidden",minWidth:0}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:s.c}} />
-                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:"1.2px",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginBottom:8,lineHeight:1.4}}>{s.label}</div>
-                    <div style={{fontSize:20,fontWeight:700,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.value}</div>
-                    <div style={{fontSize:10,color:"#7a7a9a",marginTop:6,fontFamily:"'DM Mono',monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.sub}</div>
+                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",marginBottom:10}}>{s.label}</div>
+                    <div style={{fontSize:26,fontWeight:700,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.value}</div>
+                    <div style={{fontSize:11,color:"#7a7a9a",marginTop:6,fontFamily:"'DM Mono',monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.sub}</div>
                   </div>
                 ))}
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr",gap:20}}>
+              <div className="dn-charts2">
                 <ChartCard title="Top 10 Skills by Demand" sub="% of job postings mentioning each skill">
                   <ResponsiveContainer width="100%" height={320}>
                     <BarChart data={top10.map(s=>({name:s.skill_name.toUpperCase(),value:+s.value.toFixed(1),fill:gc(s.skill_type)}))}>
@@ -297,7 +303,7 @@ export default function App() {
                   </LineChart>
                 </ResponsiveContainer>
               </ChartCard>
-              <div style={{display:"grid",gridTemplateColumns:"1fr",gap:20,marginTop:20}}>
+              <div className="dn-charts2" style={{marginTop:20}}>
                 <ChartCard title="Skill Share Distribution" sub="Proportion of all tracked skill mentions">
                   <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
@@ -328,7 +334,7 @@ export default function App() {
           {/* SALARY */}
           {view === "salary" && (
             <>
-              <div style={{display:"grid",gridTemplateColumns:"1fr",gap:20,marginBottom:20}}>
+              <div className="dn-charts2" style={{marginBottom:20}}>
                 <ChartCard title="Avg Salary by Skill" sub="USD annual · sorted highest to lowest">
                   <ResponsiveContainer width="100%" height={440}>
                     <BarChart data={bySalary.map(s=>({name:s.skill_name.toUpperCase(),value:s.avg_salary}))} layout="vertical">
@@ -363,36 +369,38 @@ export default function App() {
                 </ChartCard>
               </div>
               <ChartCard title="Full Skill Salary Breakdown" sub="All skills ranked by average annual salary">
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                  <thead>
-                    <tr>{["#","Skill","Avg Salary","Job Count","Demand %","Scale"].map(h=>(
-                      <th key={h} style={{textAlign:"left",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",fontSize:10,textTransform:"uppercase",letterSpacing:1,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontWeight:500}}>{h}</th>
-                    ))}</tr>
-                  </thead>
-                  <tbody>
-                    {bySalary.map((s,i)=>(
-                      <tr key={s.skill_name}>
-                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",fontSize:10}}>{String(i+1).padStart(2,"0")}</td>
-                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontWeight:500,color:gc(s.skill_type)}}>{s.skill_name.toUpperCase()}</td>
-                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace",color:"#00d4aa"}}>${s.avg_salary.toLocaleString()}</td>
-                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace"}}>{s.job_count.toLocaleString()}</td>
-                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace"}}>{s.value.toFixed(1)}%</td>
-                        <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
-                          <div style={{width:100,background:"#1a1a24",borderRadius:3,height:4}}>
-                            <div style={{width:(s.avg_salary/bySalary[0].avg_salary*100).toFixed(0)+"%",height:4,borderRadius:3,background:"#00d4aa"}} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:400}}>
+                    <thead>
+                      <tr>{["#","Skill","Avg Salary","Job Count","Demand %","Scale"].map(h=>(
+                        <th key={h} style={{textAlign:"left",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",fontSize:10,textTransform:"uppercase",letterSpacing:1,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontWeight:500}}>{h}</th>
+                      ))}</tr>
+                    </thead>
+                    <tbody>
+                      {bySalary.map((s,i)=>(
+                        <tr key={s.skill_name}>
+                          <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",color:"#7a7a9a",fontFamily:"'DM Mono',monospace",fontSize:10}}>{String(i+1).padStart(2,"0")}</td>
+                          <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontWeight:500,color:gc(s.skill_type)}}>{s.skill_name.toUpperCase()}</td>
+                          <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace",color:"#00d4aa"}}>${s.avg_salary.toLocaleString()}</td>
+                          <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace"}}>{s.job_count.toLocaleString()}</td>
+                          <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)",fontFamily:"'DM Mono',monospace"}}>{s.value.toFixed(1)}%</td>
+                          <td style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+                            <div style={{width:100,background:"#1a1a24",borderRadius:3,height:4}}>
+                              <div style={{width:(s.avg_salary/bySalary[0].avg_salary*100).toFixed(0)+"%",height:4,borderRadius:3,background:"#00d4aa"}} />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </ChartCard>
             </>
           )}
 
           {/* ABOUT */}
           {view === "about" && (
-            <div style={{display:"grid",gridTemplateColumns:"1fr",gap:20}}>
+            <div className="dn-charts2">
               {[
                 {title:"About This Project",text:"DataNerd is a full-stack analytics dashboard processing 670K+ real job postings to surface demand signals, salary data, and market trends for data professionals.",tags:["React","FastAPI","PostgreSQL","Recharts"]},
                 {title:"API Endpoints",text:"Powered by a FastAPI backend on Render, querying a Neon serverless Postgres database with a star schema — fact + dimension tables for skills and job postings.",tags:["/api/top-skills","/api/skill-trends","/api/momentum"]},
